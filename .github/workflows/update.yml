@@ -48,3 +48,13 @@ jobs:
       uses: peter-evans/enable-pull-request-automerge@v2
       with:
         pull-request-number: ${{ steps.pr.outputs.pull-request-number }}
+    - name: Trigger Workflow
+      uses: actions/github-script@v6
+      with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'auto-merge.yml',
+              ref: 'main',
+            })
