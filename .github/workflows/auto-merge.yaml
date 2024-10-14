@@ -2,7 +2,7 @@ name: Auto Merge PR
 
 on:
   pull_request:
-    types: [opened]
+    types: [opened, synchronize, reopened]
 
 jobs:
   auto-merge:
@@ -14,12 +14,12 @@ jobs:
       run: |
         # Check if the PR title follows the expected pattern (from the update action)
         if [[ "${{ github.event.pull_request.title }}" == *"[🤖] Update"* ]]; then
-          echo "::set-output name=should_merge::true"
+          echo "should_merge=true" >> $GITHUB_ENV
         else
-          echo "::set-output name=should_merge::false"
+          echo "should_merge=false" >> $GITHUB_ENV
     
     - name: Auto-merge the PR
-      if: steps.check.outputs.should_merge == 'true'
+      if: env.should_merge == 'true'
       uses: actions/github-script@v6
       with:
         script: |
@@ -29,3 +29,4 @@ jobs:
             pull_number: context.payload.pull_request.number,
             merge_method: 'squash'
           })
+
