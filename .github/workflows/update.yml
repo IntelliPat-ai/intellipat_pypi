@@ -47,20 +47,27 @@ jobs:
     - name: Auto-merge Pull Request
       uses: actions/github-script@v6
       with:
-        script: |
-            const pullRequestNumber = `${{ steps.pr.outputs.pull-request-number }}`
-            const pullRequest = await github.pulls.get({
+          github-token: ${{ secrets.GITHUB_TOKEN }}  # Ensure the token is passed
+          script: |
+            const pullRequestNumber = ${{ steps.pr.outputs.pull-request-number }};
+            if (!pullRequestNumber) {
+              throw new Error('Pull request number is undefined');
+            }
+            
+            const pullRequest = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pullRequestNumber
             });
-
+      
             if (pullRequest.data.labels.some(label => label.name === 'automerge')) {
-              await github.pulls.merge({
+              await github.rest.pulls.merge({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: pullRequestNumber
               });
+              console.log(`Pull request #${pullRequestNumber} has been merged.`);
             } else {
-              console.log('No automerge label found. Skipping merge.');
+              console.log(`No automerge label found on pull request #${pullRequestNumber}. Skipping merge.`);
             }
+      
