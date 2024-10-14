@@ -35,6 +35,7 @@ jobs:
         python .github/actions.py 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v3
+      id: pr
       with:
         commit-message: ':package: [:robot:] Update package in PyPi index'
         title: '[🤖] Update `${{ inputs.package_name }}` in PyPi index'
@@ -43,13 +44,7 @@ jobs:
         branch-suffix: random
         labels: automerge 
         delete-branch: true
-    - name: Trigger Workflow
-      uses: actions/github-script@v6
+    - name: Enable Auto-Merge
+      uses: peter-evans/enable-pull-request-automerge@v2
       with:
-          script: |
-            github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'auto-merge.yml',
-              ref: 'main',
-            })
+        pull-request-number: ${{ steps.pr.outputs.pull-request-number }}
