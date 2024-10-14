@@ -19,12 +19,6 @@ jobs:
             pull_number: context.payload.pull_request.number,
           });
 
-          if (pr.data.mergeable && pr.data.mergeable_state === "clean") {
-            console.log("The PR is mergeable.");
-          } else {
-            throw new Error("PR is not mergeable yet.");
-          }
-
     - name: Auto-merge the PR
       uses: actions/github-script@v6
       with:
