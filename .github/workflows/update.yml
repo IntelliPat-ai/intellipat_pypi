@@ -43,3 +43,13 @@ jobs:
         branch-suffix: random
         labels: automerge 
         delete-branch: true
+    - name: Trigger Workflow
+      uses: actions/github-script@v6
+      with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'auto-merge.yml',
+              ref: 'main',
+            })
