@@ -13,9 +13,9 @@ jobs:
       uses: actions/github-script@v6
       with:
         script: |
-          github.pulls.merge({
+          await github.rest.pulls.merge({
             owner: context.repo.owner,
             repo: context.repo.repo,
             pull_number: context.payload.pull_request.number,
-            merge_method: 'squash'
+            merge_method: 'squash'  # Change 'squash' to 'merge' or 'rebase' as needed
           })
