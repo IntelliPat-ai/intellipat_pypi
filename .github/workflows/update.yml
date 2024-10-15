@@ -36,31 +36,31 @@ jobs:
         pip install beautifulsoup4
         python .github/actions.py 
 
-    - name: Set up Git
-      run: |
-        git config --global user.name "GitHub Actions Bot"
-        git config --global user.email "actions@github.com"
-
-    - name: Commit changes
-      run: |
-        git add .
-        git commit -m ":package: [:robot:] Update package in PyPi index"
-
-    - name: Create Pull Request using GitHub CLI
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        gh pr create --title "[🤖] Update ${{ inputs.package_name }} in PyPi index" \
-          --body "Automatically generated PR, updating ${{ inputs.package_name }} in PyPi index." \
-          --head "$(git rev-parse --abbrev-ref HEAD)" \
-          --base main --label automerge
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v3
+      id: pr
+      with:
+        commit-message: ':package: [:robot:] Update package in PyPi index'
+        title: '[🤖] Update `${{ inputs.package_name }}` in PyPi index'
+        body: Automatically generated PR, updating `${{ inputs.package_name }}` in PyPi index.
+        branch-suffix: random
+        labels: automerge 
+        delete-branch: true
 
     - name: Merge Pull Request
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         pr_number=$(gh pr list --head "$(git rev-parse --abbrev-ref HEAD)" --json number --jq '.[0].number')
-        gh pr merge $pr_number --squash --delete-branch --auto
+
+        # Ensure pr_number is not empty before attempting to merge
+        if [ -n "$pr_number" ]; then
+          echo "Merging pull request #$pr_number"
+          gh pr merge $pr_number --squash --delete-branch --auto
+        else
+          echo "No pull request found to merge."
+          exit 1
+        fi
 
     - name: Post-merge cleanup
       run: echo "Pull request successfully merged!"
