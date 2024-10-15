@@ -21,10 +21,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Run Action
       env:
         PKG_ACTION: UPDATE
@@ -33,41 +35,32 @@ jobs:
       run: |
         pip install beautifulsoup4
         python .github/actions.py 
-    - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v3
-      id: pr
-      with:
-        commit-message: ':package: [:robot:] Update package in PyPi index'
-        title: '[🤖] Update `${{ inputs.package_name }}` in PyPi index'
-        body: Automatically generated PR, updating `${{ inputs.package_name }}` in PyPi
-          index.
-        branch-suffix: random
-        labels: automerge 
-        delete-branch: true
-    - name: Auto-merge Pull Request
-      uses: actions/github-script@v6
-      with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}  # Ensure the token is passed
-          script: |
-            const pullRequestNumber = ${{ steps.pr.outputs.pull-request-number }};
-            if (!pullRequestNumber) {
-              throw new Error('Pull request number is undefined');
-            }
-            
-            const pullRequest = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pullRequestNumber
-            });
-      
-            if (pullRequest.data.labels.some(label => label.name === 'automerge')) {
-              await github.rest.pulls.merge({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: pullRequestNumber
-              });
-              console.log(`Pull request #${pullRequestNumber} has been merged.`);
-            } else {
-              console.log(`No automerge label found on pull request #${pullRequestNumber}. Skipping merge.`);
-            }
-      
+
+    - name: Set up Git
+      run: |
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email "actions@github.com"
+
+    - name: Install GitHub CLI
+      run: |
+        sudo apt-get install -y gh
+
+    - name: Commit changes
+      run: |
+        git add .
+        git commit -m ":package: [:robot:] Update package in PyPi index"
+
+    - name: Create Pull Request using GitHub CLI
+      run: |
+        gh pr create --title "[🤖] Update ${{ inputs.package_name }} in PyPi index" \
+          --body "Automatically generated PR, updating ${{ inputs.package_name }} in PyPi index." \
+          --head "$(git rev-parse --abbrev-ref HEAD)" \
+          --base main --label automerge
+
+    - name: Merge Pull Request
+      run: |
+        pr_number=$(gh pr list --head "$(git rev-parse --abbrev-ref HEAD)" --json number --jq '.[0].number')
+        gh pr merge $pr_number --squash --delete-branch --auto
+
+    - name: Post-merge cleanup
+      run: echo "Pull request successfully merged!"
