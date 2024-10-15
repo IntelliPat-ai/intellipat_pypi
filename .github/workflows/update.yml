@@ -41,16 +41,14 @@ jobs:
         git config --global user.name "GitHub Actions Bot"
         git config --global user.email "actions@github.com"
 
-    # - name: Install GitHub CLI
-    #   run: |
-    #     sudo apt-get install -y gh
-
     - name: Commit changes
       run: |
         git add .
         git commit -m ":package: [:robot:] Update package in PyPi index"
 
     - name: Create Pull Request using GitHub CLI
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         gh pr create --title "[🤖] Update ${{ inputs.package_name }} in PyPi index" \
           --body "Automatically generated PR, updating ${{ inputs.package_name }} in PyPi index." \
@@ -58,6 +56,8 @@ jobs:
           --base main --label automerge
 
     - name: Merge Pull Request
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         pr_number=$(gh pr list --head "$(git rev-parse --abbrev-ref HEAD)" --json number --jq '.[0].number')
         gh pr merge $pr_number --squash --delete-branch --auto
