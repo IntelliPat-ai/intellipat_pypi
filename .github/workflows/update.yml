@@ -48,19 +48,12 @@ jobs:
         delete-branch: true
 
     - name: Merge Pull Request
+      if: ${{ steps.pr.outputs.pull-request-number }}
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        pr_number=$(gh pr list --head "$(git rev-parse --abbrev-ref HEAD)" --json number --jq '.[0].number')
-
-        # Ensure pr_number is not empty before attempting to merge
-        if [ -n "$pr_number" ]; then
-          echo "Merging pull request #$pr_number"
-          gh pr merge $pr_number --squash --delete-branch --auto
-        else
-          echo "No pull request found to merge."
-          exit 1
-        fi
+        echo "Merging pull request #${{ steps.pr.outputs.pull-request-number }}"
+        gh pr merge ${{ steps.pr.outputs.pull-request-number }} --squash --delete-branch --auto
 
     - name: Post-merge cleanup
       run: echo "Pull request successfully merged!"
