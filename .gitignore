@@ -1,1 +1,8 @@
 __pycache__/
+
+# Local git worktrees -- developer checkouts, not project content.
+# `git add -A` (and, in released repos, `intellipat update package`, which
+# commits the WORKING TREE) sweeps an unignored .worktrees/ into a commit as
+# gitlinks (mode 160000). That happened to intellipat_llm_utils v0.4.18
+# (4a2c956), whose release commit carried three developer worktrees.
+.worktrees/
